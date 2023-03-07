@@ -1,0 +1,126 @@
+{% extends "auctions/layout.html" %}
+{% block body %}
+<div class="card-body">
+    <h3 class="card-title" style = "font-weight: bold">{{ item.name }} </h3>
+    {% if user.is_authenticated %}
+    <form id="my-form" action="{% url 'listing' item.id %}" method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <div class="custom-control custom-switch card-text">
+                <label class="custom-control custom-checkbox">
+                    <input type="checkbox" class="custom-control-input" name="watchlist" form="my-form" id="watchlist-checkbox" 
+                    {% if watched %}
+                    checked
+                    {% endif %}>
+                    <span class="custom-control-label" id="watchlist-label">
+                        watchlist
+                    </span>
+                </label>
+            </div>
+            <input type="hidden" name="watchlist" id="watchlist-hidden" value="
+            {% if not watched %}
+            off
+            {% endif %}">
+            <button type="submit" class="btn btn-sm btn-primary" id="watchlist-submit" style="display: none;"></button>
+        </div>
+    </form>
+    
+    <script>
+        const watchlistCheckbox = document.querySelector('#watchlist-checkbox');
+        const watchlistSubmit = document.querySelector('#watchlist-submit');
+    
+        watchlistCheckbox.addEventListener('click', function() {
+            
+            watchlistSubmit.click();
+        });
+    </script>
+    {% endif %}
+    {% if item.image %}
+<div class="col-md-4 align-self-center card-text">
+<img src="{{ item.image }}" class="card-img" alt="Image for {{ item.name }} listing" >
+</div>
+{% endif %}
+<div>
+    <p class="card-text" style="font-size: 1.2em">{{ item.description }}</p>
+    {% if max != 0.0%}
+    <p class="card-text" style="font-size: 1.5em; font-weight: bold">Price: R {{ max }}</p>
+    <p class="card-text small text-muted" style="font-size: 0.8em">this item has {{ bids_ammount }} bids 
+        {% if top_bidder %}
+            you are currently the highest bider
+        {% endif %}
+    {% else %}
+    <p class="card-text" style="font-size: 1.5em; font-weight: bold">Price: R {{ item.start_bid }}</p>
+    </p>
+    {% endif %}
+    {% if user.is_authenticated and user != item.owner and not winner%}
+    <form action="{% url 'listing' item.id %}" method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            {{ form.as_p }}
+            <input class="btn btn-primary" type="submit" value="Bid">
+        </div>
+    </form> 
+    {% endif %}
+    {% if user == item.owner %}`
+        {% if winner %}
+        <h3 style = "font-weight: bold">Bid Closed </h3>
+        {% else %}
+        <form action="{% url 'listing' item.id %}" method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <input type="hidden" name="End" id="End" value="End">
+                <input class="btn btn-primary" type="submit" value="End bidding" name = "submit">
+            </div>
+        </form>
+        {% endif %}
+    {% else %}
+        {% if top_bidder %}
+        <h3 style = "font-weight: bold">Congradulations You your bid was sucessfull </h3>
+        {% elif winner %}
+            <h3 style = "font-weight: bold">Bid Closed </h3>
+        {% endif %}
+    {% endif %}
+    <p class="card-text small text-muted" style="font-size: 0.8em">Created on: {{ item.created }}</p>
+
+    <h5 class ="card-text" style = "font-weight: bold">Details</h5>
+    <ul>
+        <li>Listed by: {{item.owner}}</li>
+        {% if item.catagory == none %}
+        <li>Catagory: no catagory selected</li>
+        {% else %}
+        <li>Catagory: {{item.catagory}}</li>
+        {% endif %}
+        
+    </ul>
+    
+      {% if request.user.is_authenticated %}
+      <form method="post" action="{% url 'listing' item.id%}">
+          {% csrf_token %}
+          <div class="form-group">
+              {{ commentform.message }}
+          </div>
+          <button type="submit" class="btn btn-primary">Add Comment</button>
+      </form>
+        {% else %}
+            <p>Please <a href="{% url 'login' %}">login</a> to add a comment.</p>
+        {% endif %}
+        {% if comments %}
+        
+          {% for comment in comments %}
+            <p>
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">{{ comment.username.username }}</h5>
+                  <p class="card-text">{{ comment.message }}</p>
+                  <p class="card-text"><small class="text-muted">{{ comment.created_date|date:"F j, Y, g:i a" }}</small></p>
+                </div>
+              </div>
+            </p>
+          {% endfor %}
+    
+      {% else %}
+        <p>No comments yet.</p>
+      {% endif %}
+</div>
+
+{% endblock %}
